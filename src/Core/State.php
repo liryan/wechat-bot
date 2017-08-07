@@ -1,7 +1,7 @@
 <?php
 namespace WechatBot\Core;
 use WechatBot\IInterface\IStateLogic;
-class State implements  IStateLogic
+abstract class State implements  IStateLogic
 {
     const signal_started='started';
     const signal_waitlogin='waitlogin';
@@ -11,7 +11,7 @@ class State implements  IStateLogic
 
     public static $signal_table=[];
 
-    public static function init()
+    public static function start()
     {
         $states=[
             StateNone::class,
@@ -19,7 +19,7 @@ class State implements  IStateLogic
             StateRunning::class,
         ];
 
-        foreach($state as $cls){
+        foreach($states as $cls){
             $obj=new $cls();
             $obj->init();
         }
@@ -31,12 +31,12 @@ class State implements  IStateLogic
         if(!isset(static::$signal_table[$signal])){
             throw new BotException("sorry,not find logic that to process this signal:$signal");
         }
-        $signal_table[$signal]->doState();
+        static::$signal_table[$signal]->doState();
     }
 
     public function listenState($signal)
     {
-        if(isset(static::$signal_table[$signal])){
+        if(!isset(static::$signal_table[$signal])){
             static::$signal_table[$signal]=$this;
         }
     }

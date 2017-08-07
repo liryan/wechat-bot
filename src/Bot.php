@@ -5,6 +5,6 @@ class Bot
 {
     public function run()
     {
-        State::init();
+        State::start();
     }
 }
