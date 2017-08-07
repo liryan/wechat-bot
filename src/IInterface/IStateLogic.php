@@ -11,6 +11,6 @@
 namespace WechatBot\IInterface;
 interface IStateLogic
 {
-    public function init();
+    public function init($bus);
     public function doState();
 }

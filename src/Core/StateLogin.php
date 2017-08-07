@@ -1,8 +1,9 @@
 <?php
 namespace WechatBot\Core;
 class StateLogin extends State{
-    public function init()
+    public function init($bus)
     {
+        parent::init($bus);
         $this->listenState(State::signal_waitlogin);
     }
     public function doState()
