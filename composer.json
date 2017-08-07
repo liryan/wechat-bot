@@ -1,0 +1,14 @@
+{
+    "name": "liryan/wechat-bot",
+    "description": "基于swoole的微信机器人",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "liruiyan",
+            "email": "canbetter@qq.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
