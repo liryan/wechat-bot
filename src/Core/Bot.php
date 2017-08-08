@@ -1,5 +1,16 @@
 <?php
+/**
+ * Bot 
+ * 
+ * @package 
+ * @version 0.0.1
+ * @copyright Open Source
+ * @author liruiyan <canbetter@qq.com> 
+ * @license MIT
+ */
+
 namespace WechatBot\Core;
+
 class Bot
 {
     private $bus;
@@ -32,6 +43,14 @@ class Bot
         $this->bus->switchTo($signal);
     }
 
+    /**
+     * buildFromRemote 
+     * 创建web端扫码登录的机器人
+     * @param mixed $queue 
+     * @static
+     * @access public
+     * @return void
+     */
     public static function buildFromRemote($queue)
     {
         $uuid=$queue->pop(Bus::UUID_Q);
@@ -49,5 +68,14 @@ class Bot
             return $data;
         }
         return null;
+    }
+
+    public function isNeedRemove()
+    {
+        return Bus::isNeedRemove($this->id);
+    }    
+
+    public function kick($id=0)
+    {
     }
 }

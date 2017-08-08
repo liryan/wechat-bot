@@ -11,7 +11,9 @@ class StateQrcode extends State{
     public function doState()
     {
         $uuid=$this->protocol->requestUuid();
-        $this->bus->register($uuid);
-        $this->bus->fire(State::signal_waitlogin,$remote=true);
+        if($uuid){
+            $this->bus->register($uuid);
+            $this->bus->fire(State::signal_waitlogin,$remote=true);
+        }
     }
 }

@@ -88,4 +88,10 @@ class Helper
             throw new \Exception("Curl get error,CODE:$error");
         }
     }
+
+    public static function getMillisecond()
+    {
+        $tm=gettimeofday();
+        return $tm['sec']*1000+round($tm['usec']/1000);
+    }
 }

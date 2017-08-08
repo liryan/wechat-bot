@@ -7,10 +7,12 @@ class Bus{
     private $sigtable=[];
     private $current_signal=null;
     private $queue;
-    private $remoteid;
-
-    public function __construct($queue)
+    private $botid;
+    private static $bus_lib=[];
+    public function __construct($id,$queue)
     {
+        $this->botid=$id;
+        static::$bus_lib[$id]=$this;
         $this->queue=$queue;
     }
 
@@ -42,8 +44,8 @@ class Bus{
             }
         }
         else{
-            if($this->remoteid){
-                $this->queue->send(SIGNAL_Q,json_encode(['uuid'=>$this->remoteid,'signal'=>$signal]));
+            if($this->botid){
+                $this->queue->send(SIGNAL_Q,json_encode(['uuid'=>$this->botid,'signal'=>$signal]));
             }
             else{
                 throw new BotException("Sorry,uuid havn't been initialized,cannot send to remote");
@@ -67,12 +69,26 @@ class Bus{
 
     public function register($uuid)
     {
-        $this->remoteid=$uuid;
+        $this->botid=$uuid;
         $this->queue->push(self::UUID_Q,$uuid);
     }
 
     public function switchTo($signal)
     {
         $this->current_signal=$signal;
+    }
+
+    public function getBotId()
+    {
+        return $this->botid;
+    }
+
+    public static function isNeedRemove($id)
+    {
+        
+    }
+
+    public static function stopIt($id)
+    {
     }
 }
