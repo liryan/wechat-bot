@@ -7,11 +7,12 @@ class Bus{
     private $sigtable=[];
     private $current_signal=null;
     private $queue;
-    private $botid;
+    private $bot_slot;
     private static $bus_lib=[];
-    public function __construct($id,$queue)
+    public function __construct($bot,$queue)
     {
-        $this->botid=$id;
+        $this->bot_slot=$bot;
+        $this->self_data=[];
         static::$bus_lib[$id]=$this;
         $this->queue=$queue;
     }
@@ -32,7 +33,7 @@ class Bus{
         $this->fire(State::$signal_default);
     }
 
-    public function fire($signal,$remote_uuid=0)
+    public function fire($signal,$data=[],$remote_uuid=0)
     {
         if($remote==false){
             $this->current_signal=$signal;
@@ -69,7 +70,6 @@ class Bus{
 
     public function register($uuid)
     {
-        $this->botid=$uuid;
         $this->queue->push(self::UUID_Q,$uuid);
     }
 
@@ -80,7 +80,7 @@ class Bus{
 
     public function getBotId()
     {
-        return $this->botid;
+        return $this->bot_slot->getId();
     }
 
     public static function isNeedRemove($id)
@@ -90,5 +90,10 @@ class Bus{
 
     public static function stopIt($id)
     {
+    }
+
+    public function &getBotData()
+    {
+        return $this->bot_slot->bot_data;
     }
 }

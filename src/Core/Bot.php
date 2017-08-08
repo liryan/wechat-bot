@@ -16,6 +16,8 @@ class Bot
     private $bus;
     private $id;
     private $time;
+
+    public  $bot_data;//微信数据
     public function __construct($id,$queue)
     {
         $this->bus=new Bus($queue);
@@ -34,7 +36,6 @@ class Bot
 
     public function tick()
     {
-
         $this->bus->checkSignal();
     }
 
@@ -60,6 +61,14 @@ class Bot
         return null;
     }
 
+    /**
+     * remoteSignal 
+     * 接受来自web端的登录信息
+     * @param mixed $queue 
+     * @static
+     * @access public
+     * @return void
+     */
     public static function remoteSignal($queue)
     {
         $msg=$queue->pop(Bus::SIGNAL_Q);
