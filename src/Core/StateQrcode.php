@@ -5,13 +5,13 @@ class StateQrcode extends State{
     public function init($bus)
     {
         parent::init($bus);
-        $this->listenState(State::signal_waitlogin);
+        $this->bus->listen(State::signal_qrcode);
     }
+
     public function doState()
     {
-        echo "show qrcode<br>";
-        //$data=$this->protocol_factory->createQrcode();
-        //$this->protocol_factory->showQrcode();
-        //$this->fireState(State::signal_logined);
+        $uuid=$this->protocol->requestUuid();
+        $this->bus->register($uuid);
+        $this->bus->fire(State::signal_waitlogin,$remote=true);
     }
 }

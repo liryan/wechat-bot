@@ -33,7 +33,7 @@ class Helper
         }
         curl_setopt($ch,CURLOPT_URL, $url);
         $urlinfo=parse_url($url);
-        if(strncasecmp($urlinfo['scheme'],"https")==0){
+        if(strcasecmp($urlinfo['scheme'],"https")==0){
             curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,FALSE);
             curl_setopt($ch,CURLOPT_SSL_VERIFYHOST,0);//2:严格校验
         }
@@ -64,7 +64,7 @@ class Helper
         $ch = curl_init();  
         curl_setopt($ch,CURLOPT_URL,$url);
         $urlinfo=parse_url($url);
-        if(strncasecmp($urlinfo['scheme'],"https")==0){
+        if(strcasecmp($urlinfo['scheme'],"https")==0){
             curl_setopt($ch, CURLOPT_PORT, 443);  
             //curl_setopt($ch, CURLOPT_SSLVERSION, 3);  
             curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,FALSE);  //信任任何证书 
@@ -78,7 +78,7 @@ class Helper
             curl_setopt($ch,CURLOPT_SSLKEYTYPE,'PEM');
             curl_setopt($ch,CURLOPT_SSLKEY, $cert['key']);
         }
-        $data = curl_exec($curl);  
+        $data = curl_exec($ch);  
         if($data){
             curl_close($ch);
             return $data;

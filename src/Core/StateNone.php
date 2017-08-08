@@ -4,10 +4,10 @@ class StateNone extends State{
     public function init($bus)
     {
         parent::init($bus);
-        $this->listenState(State::signal_started);
+        $this->bus->listen(State::signal_started);
     }
     public function doState()
     {
-        $this->fireState(State::signal_waitlogin);
+        $this->bus->fire(State::signal_qrcode);
     }
 }

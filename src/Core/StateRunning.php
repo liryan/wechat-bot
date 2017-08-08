@@ -4,7 +4,7 @@ class StateRunning extends State{
     public function init($bus)
     {
         parent::init($bus);
-        $this->listenState(State::signal_logined);
+        $this->bus->listen(State::signal_logined);
     }
 
     public function doState()

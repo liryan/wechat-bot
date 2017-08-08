@@ -4,11 +4,10 @@ class StateLogin extends State{
     public function init($bus)
     {
         parent::init($bus);
-        $this->listenState(State::signal_waitlogin);
+        $this->bus->listen(State::signal_waitlogin);
     }
     public function doState()
     {
-        echo "has logined .ok \n";
-        $this->fireState(State::signal_logined);
+        $this->bus->fire(State::signal_logined);
     }
 }
