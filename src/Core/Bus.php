@@ -1,5 +1,15 @@
 <?php
+/**
+ * Bus
+ * 消息中枢，关联bot和状态处理机
+ * @package 
+ * @version 0.0.1
+ * @copyright Open Source
+ * @author liruiyan <canbetter@qq.com> 
+ * @license MIT
+ */
 namespace WechatBot\Core;
+use WechatBot\Helper\Helper;
 class Bus{
     const UUID_Q="wechatbot_uuid_queue";
     const SIGNAL_Q="wechatbot_signal_queue";
@@ -8,16 +18,20 @@ class Bus{
     private $current_signal=null;
     private $queue;
     private $bot_slot;
-    private static $bus_lib=[];
     public function __construct($bot,$queue)
     {
         $this->bot_slot=$bot;
         $this->self_data=[];
-        static::$bus_lib[$id]=$this;
         $this->queue=$queue;
     }
 
-    public function start()
+    /**
+     * start 
+     * start the first state machine
+     * @access public
+     * @return void
+     */
+    public function start($wait=true)
     {
         $states=[
             new StateNone(),
@@ -29,13 +43,23 @@ class Bus{
         foreach($states as $obj){
             $obj->init($this);
         }
-
-        $this->fire(State::$signal_default);
+        if(!$wait){ 
+            $this->fire(State::$signal_default);
+        }
     }
 
-    public function fire($signal,$data=[],$remote_uuid=0)
+    /**
+     * fire 
+     * enter other state mechine
+     * @param mixed $signal 
+     * @param int $remote_uuid 
+     * @access public
+     * @return void
+     */
+    public function fire($signal,$remote_uuid=0)
     {
-        if($remote==false){
+        Helper::msg("Fire signal:$signal");
+        if(!$remote_uuid){
             $this->current_signal=$signal;
             if(!isset($this->sigtable[$signal])){
                 throw new BotException("No listener for $signal");
@@ -45,15 +69,18 @@ class Bus{
             }
         }
         else{
-            if($this->botid){
-                $this->queue->send(SIGNAL_Q,json_encode(['uuid'=>$this->botid,'signal'=>$signal]));
-            }
-            else{
-                throw new BotException("Sorry,uuid havn't been initialized,cannot send to remote");
-            }
+            $this->queue->send(self::SIGNAL_Q,json_encode(['uuid'=>$remote_uuid,'signal'=>$signal]));
         }
     }
 
+    /**
+     * listen 
+     * register signal for process
+     * @param mixed $signal 
+     * @param mixed $who 
+     * @access public
+     * @return void
+     */
     public function listen($signal,$who)
     {
         if(!isset($this->sigtable[$signal])){
@@ -61,6 +88,12 @@ class Bus{
         }
     }
 
+    /**
+     * checkSignal 
+     * call this in main loop
+     * @access public
+     * @return void
+     */
     public function checkSignal()
     {
         if($this->current_signal){
@@ -68,14 +101,33 @@ class Bus{
         }
     }
 
+    /**
+     * register 
+     * 
+     * @param mixed $uuid 
+     * @access public
+     * @return void
+     */
     public function register($uuid)
     {
-        $this->queue->push(self::UUID_Q,$uuid);
+        $this->queue->send(self::UUID_Q,$uuid);
     }
 
+    /**
+     * switchTo 
+     * 
+     * @param mixed $signal 
+     * @access public
+     * @return void
+     */
     public function switchTo($signal)
     {
         $this->current_signal=$signal;
+    }
+
+    public function &getBotData()
+    {
+        return $this->bot_slot->bot_data;
     }
 
     public function getBotId()
@@ -83,17 +135,27 @@ class Bus{
         return $this->bot_slot->getId();
     }
 
-    public static function isNeedRemove($id)
+
+    /**
+     * removeMe 
+     * remove bot who is in tiemout
+     * @access public
+     * @return void
+     */
+    public function removeMe()
     {
-        
+        Bot::remove($this->bot_slot,0);
     }
 
-    public static function stopIt($id)
+    /**
+     * identifyOne 
+     * kick one bot offline
+     * @param mixed $uin 
+     * @access public
+     * @return void
+     */
+    public function identifyOne($uin)
     {
-    }
-
-    public function &getBotData()
-    {
-        return $this->bot_slot->bot_data;
+        Bot::remove($this->bot_slot,$uin);
     }
 }

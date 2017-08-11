@@ -10,7 +10,7 @@
  */
 
 namespace WechatBot\Core;
-
+use WechatBot\Helper\Helper;
 class Bot
 {
     private $bus;
@@ -18,15 +18,17 @@ class Bot
     private $time;
 
     public  $bot_data;//微信数据
+    public static $factory=[];
+
     public function __construct($id,$queue)
     {
-        $this->bus=new Bus($queue);
+        $this->bus=new Bus($this,$queue);
         $this->id=$id;
     }
 
-    public function start()
+    public function start($wait=false)
     {
-        $this->bus->start();
+        $this->bus->start($wait);
     }
 
     public function getId()
@@ -41,6 +43,7 @@ class Bot
 
     public function switchTo($signal)
     {
+        Helper::msg("signal switch to $signal");
         $this->bus->switchTo($signal);
     }
 
@@ -56,7 +59,11 @@ class Bot
     {
         $uuid=$queue->pop(Bus::UUID_Q);
         if($uuid){
-            return new Bot($uuid,$queue);
+            Helper::msg("create bot uuid=$uuid");
+            $new_bot=new Bot($uuid,$queue);
+            $new_bot->start(true);
+            static::$factory[$uuid]=$new_bot;
+            return $new_bot;
         }
         return null;
     }
@@ -79,12 +86,32 @@ class Bot
         return null;
     }
 
-    public function isNeedRemove()
+    /**
+     * remove 
+     * if [with_uin]==null, will remove [bot],else will remove other whose uin==[with_uin]
+     * @param mixed $bot  
+     * @param mixed $with_uin 
+     * @static
+     * @access public
+     * @return void
+     */
+    public static function remove($target_bot,$with_uin)
     {
-        return Bus::isNeedRemove($this->id);
-    }    
-
-    public function kick($id=0)
-    {
+        foreach(static::$factory as $uuid=>$bot){
+            if($target_bot==$bot){
+                if($with_uin){
+                    continue;
+                }
+                else{
+                    unset(static::$factory[$uuid]);
+                    break;
+                }
+            }
+            $bot_data=$bot->bot_data;
+            if(isset($bot_data['uin']) && $bot_data['uin']==$with_uin){
+                unset(static::$factory[$uuid]);
+                break;
+            }
+        }
     }
 }

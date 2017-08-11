@@ -30,7 +30,9 @@ class Protocol
             'lang'=>'zh_CN',
             '_'=>Helper::getMillisecond(),
         ];
-        $data=Helper::get($this->url.http_build_query($data));
+        $code=0;
+        $uuid=0;
+        $data=Helper::get($this->uuid_url.http_build_query($data));
         if(preg_match("/QRLogin\.code[ ]*=[ ]*([0-9]+)[^\"]+\"([^\"]+)\"/i",$data,$match)){
             $code=$match[1];
             $uuid=$match[2];

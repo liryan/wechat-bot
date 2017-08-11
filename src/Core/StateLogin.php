@@ -11,9 +11,10 @@
  */
 
 namespace WechatBot\Core;
-
+use WechatBot\Helper\Helper;
+use WechatBot\Protocol\Protocol;
 class StateLogin extends State{
-    const   CHECK_LOGINED       =1000;
+    const   CHECK_LOGINED       =5000;
     const   FAILD_COUNT_LIMIT   =100;
 
     const   STEP_START          =0;
@@ -21,9 +22,10 @@ class StateLogin extends State{
     const   STEP_COOKIE         =2;
     const   STEP_NOTIFY         =3;
 
-    private $deltatime=         0;
-    private $failed_counter=    0;
+    private $deltatime          =0;
+    private $failed_counter     =0;
     private $cur_step;
+    private $pause              =false;             
 
     /**
      * init 
@@ -36,7 +38,7 @@ class StateLogin extends State{
     {
         $this->cur_step=self::STEP_START;
         parent::init($bus);
-        $this->bus->listen(State::signal_waitlogin);
+        $this->bus->listen(State::signal_waitlogin,$this);
     }
 
     /**
@@ -47,17 +49,20 @@ class StateLogin extends State{
      */
     public function doState()
     {
-        $count=$this->getTickCount();
+        $this->tickcount += $this->getTickCount();
+        Helper::msg("State:".$this->cur_step.":".$this->tickcount);
         switch($this->cur_step){
-        case self::STEP_NONE:
-            if($count>self::CHECK_LOGINED){
-                if($this->checkLoginState()){
-                    $this->bus->fire(State::signal_logined);
-                }
-                else{
+        case self::STEP_START:
+            if($this->pause){
+                Helper::msg('Login statue has pause');
+                return;
+            }
+            if($this->tickcount>self::CHECK_LOGINED){
+                $this->tickcount=0;
+                if(!$this->checkLoginState()){
                     $this->failed_counter++;
                     if($this->failed_counter>self::FAILD_COUNT_LIMIT){
-                        $this->bus->kick();
+                        $this->pause=true;
                     }
                 }
             }
@@ -80,11 +85,12 @@ class StateLogin extends State{
     {
         $logininfo=$this->protocol->getLoginCode($this->bus->getBotId());
         $code=$logininfo['code'];
+        Helper::msg("Code:".$code);
         if($code==Protocol::CODE_LOGINED){
             $data=$this->protocol->getCookie($logininfo['url']);
             $bot_data=&$this->bus->getBotData();
             $bot_data = $data;
-            $this->bus->identifyOne($this->uid);
+            $this->bus->identifyOne($bot_data['uin']);
             $this->cur_step=self::STEP_INIT;
             return true;
         }
@@ -99,6 +105,9 @@ class StateLogin extends State{
     public function getContractList()
     {
         $bot_data=&$this->bus->getBotData();
+        print_r($bot_data);
         $data=$this->protocol->init($bot_data['cookie'],$bot_data['pass_ticket']);
+        print_r($data);
+        exit();
     }
 }

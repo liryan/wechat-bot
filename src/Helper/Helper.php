@@ -25,6 +25,7 @@ class Helper
     public static function  post($data,$url,$cert='',$proxy='')
     {
         $ch = curl_init();
+        static::msg("Post:$url"." data:".$data);
         curl_setopt($ch, CURLOPT_TIMEOUT,5);
 
         if($proxy){ 
@@ -62,6 +63,7 @@ class Helper
     public static function get($url,$cert='')
     {
         $ch = curl_init();  
+        static::msg("get:$url");
         curl_setopt($ch,CURLOPT_URL,$url);
         $urlinfo=parse_url($url);
         if(strcasecmp($urlinfo['scheme'],"https")==0){
@@ -71,6 +73,7 @@ class Helper
             curl_setopt($ch,CURLOPT_SSL_VERIFYHOST,0);      //2:严格校验
         }
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);  
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         if($cert){
             curl_setopt($ch,CURLOPT_SSLCERTTYPE,'PEM');
@@ -79,6 +82,7 @@ class Helper
             curl_setopt($ch,CURLOPT_SSLKEY, $cert['key']);
         }
         $data = curl_exec($ch);  
+        echo $data;
         if($data){
             curl_close($ch);
             return $data;
@@ -93,5 +97,15 @@ class Helper
     {
         $tm=gettimeofday();
         return $tm['sec']*1000+round($tm['usec']/1000);
+    }
+
+    public static function msg($msg)
+    {
+        echo Date('Y-m-d H:i:s')."\t".$msg."\n";
+    }
+
+    public static function outImg($url)
+    {
+        echo '<div style="text-align:center"><h1>微信扫码登录机器人</h1><img src="'.$url.'"></div>';
     }
 }

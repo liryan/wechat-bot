@@ -4,7 +4,7 @@ class StateNone extends State{
     public function init($bus)
     {
         parent::init($bus);
-        $this->bus->listen(State::signal_started);
+        $this->bus->listen(State::signal_started,$this);
     }
     public function doState()
     {

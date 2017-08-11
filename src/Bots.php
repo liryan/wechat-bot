@@ -11,6 +11,7 @@
 namespace WechatBot;
 use WechatBot\Core\Bot;
 use WechatBot\Helper\Queue;
+use WechatBot\Helper\Helper;
 
 class Bots
 {
@@ -30,31 +31,29 @@ class Bots
     public function run()
     {
         $queue=new Queue($this->conf['redis']);
+        $start=0;
         do{
-            $bot=Bot::buildFromRemote($queue);
-            if($bot){
-                $this->bot_lib[$bot->getId()]=$bot;
-            }
-            $signal=Bot::remoteSignal();
+            Bot::buildFromRemote($queue);
+            $signal=Bot::remoteSignal($queue);
             if($signal){
-                if(isset($this->bot_lib[$signal['uuid']])){
-                    $bot=$this->bot_lib[$signal['uuid']];
+                Helper::msg("recv:".json_encode($signal));
+                if(isset(Bot::$factory[$signal['uuid']])){
+                    $bot=Bot::$factory[$signal['uuid']];
                     $bot->switchTo($signal['signal']);
                 }
                 else{
                     Helper::msg("No bot responses for ".$signal['uuid']."'s ".$signal['signal']);
                 }
             }
-
-            foreach($this->bot_lib as $uuid=>$bot){
-                if($bot->isNeedRemove()){
-                    unset($this->bot_lib[$uuid]);
-                }
-                else{
-                    $bot->tick();
-                }
+            foreach(Bot::$factory as $bot){
+                $bot->tick();
             }
-            usleep(200);
+            $now=Helper::getMillisecond();
+            if($now-$start>2000){
+                Helper::msg("Current number of bots is ".count(Bot::$factory));
+                $start=$now;
+            }
+            usleep(1000000);
         }while(true);
     }
 
@@ -69,7 +68,7 @@ class Bots
     {
         $queue=new Queue($this->conf['redis']);
         for($i=0;$i<$count;$i++){
-            $b=new Bot($i);
+            $b=new Bot($i,$queue);
             $b->start();
         }
     }

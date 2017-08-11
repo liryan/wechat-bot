@@ -5,7 +5,7 @@ class Queue
     private $client;
     public function __construct($config)
     {
-        $this->client=new Predis\Client(
+        $this->client=new \Predis\Client(
             [
                 'scheme'=>'tcp',
                 'host'=>$config['host'],

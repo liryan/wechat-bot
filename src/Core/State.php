@@ -17,6 +17,7 @@ abstract class State implements  IStateLogic
     protected               $protocol;
     public static           $signal_default;
     protected               $ticktime=0;
+    protected               $tickcount=0;
 
     public function init($bus)
     {
@@ -30,5 +31,6 @@ abstract class State implements  IStateLogic
         $now=Helper::getMillisecond();
         $count=$now-$this->ticktime;
         $this->ticktime=$now;
+        return $count;
     }
 }
