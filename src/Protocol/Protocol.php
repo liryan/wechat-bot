@@ -18,8 +18,9 @@ class Protocol
     public $login_check_url         ="https://login.wx.qq.com/cgi-bin/mmwebwx-bin/login?";
     public $init_url                ="https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxinit?";
     public $sync_check_url          ="https://webpush.wx2.qq.com/cgi-bin/mmwebwx-bin/synccheck?";
+    public $get_contacts_url        ="https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxgetcontact?";
     public $notify_url              ="https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxstatusnotify?";
-    public $msg_rsync_url           ="https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxsync?";
+    public $msg_sync_url            ="https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxsync?";
 
     public function requestUuid()
     {
@@ -51,7 +52,7 @@ class Protocol
             'loginicon'=>'true',
             'uuid'=>$uuid,
             'tip'=>0,
-            'r'=>1066062654,
+            'r'=>abs(~time()),
             '_'=>Helper::getMillisecond()
         ];
         $data=Helper::get($this->login_check_url.http_build_query($data));
@@ -93,35 +94,69 @@ class Protocol
     public function init($cookie,$ticket)
     {
         $params=[
-            'r'=>'',
+            'r'=>abs(~time()),
             'lang'=>'zh_CN',
             'pass_ticket'=>$ticket,
             '_'=>Helper::getMillisecond()
         ];
         $data=json_encode($cookie);
         $data=Helper::post($data,$this->init_url.http_build_query($params));
-        $response=json_decode($data,true);
-        return [
-            'keys'=>$response['SyncKey']['List']
-        ];
+        return json_decode($data,true);
     }
     
-    public function syncCheck($keys,$sign)
+
+    public function openNotify($cookie,$info)
     {
         $data=[
-            'r'=>'',
-            'skey'=>$sign['skey'],
-            'sid'=>$sign['sid'],
-            'uin'=>$sign['uin'],
-            'deviceid'=>$sign['deviceid'],
-            'synckey'=>'',
-            '_'=>Helper::getMillisecond()
+            'Code'=>3,
+            'FromUserName'=>$info['FromUserName'],
+            'ToUserName'=>$info['FromUserName'],
+            'ClientMsgId'=>Helper::getMillisecond()
             ];
+        $data=json_encode(array_merge($data,$cookie));
+        $params=[
+            'lang'=>"zh_CN",
+            'pass_ticket'=>$info['ticket'],
+            ];
+        $response=Helper::post($data,$this->notify_url.http_build_query($params));
+        $obj=json_decode($response,true);
+        if($obj['Ret']==0){
+            return true;
+        }
+        return false;
+    }
+
+    public function getContacts($data)
+    {
+        $params=[
+            'r'=>Helper::getMillisecond(),
+            'seq'=>0,
+            'skey'=>$data['skey'],
+         ];
+        $response=Helper::get($this->get_contacts_url.http_build_query($params));
+        $obj=json_decode($response,true);
+        if($obj['BaseResponse']['Ret']==0){
+            return $obj['MemberList'];
+        }
+        return [];
+    }
+
+    public function syncCheck($keys,$sign)
+    {
         $synckey='';
         foreach($keys as $row){
             $synckey.=$row['key']."_".$row['val']."|";
         }
-        $data['synckey']=trim($synckey,"|");
+        $data=[
+            'r'=>abs(~time()),
+            'skey'=>$sign['skey'],
+            'sid'=>$sign['sid'],
+            'uin'=>$sign['uin'],
+            'deviceid'=>$sign['deviceid'],
+            'synckey'=>trim($synckey,"|"),
+            '_'=>Helper::getMillisecond()
+        ];
+
         $response=Helper::get($this->sync_check_url.http_build_query($data));
         $code=0;
         $status=0;
@@ -132,33 +167,26 @@ class Protocol
         return ['code'=>$code,'status'=>$status];
     }
 
-    public function msgNotify($cookie,$myinfo)
+    public function msgSync($data,$keys)
     {
-        $data=[
-            'Code'=>3,
-            'FromUserName'=>$myinfo['FromUserName'],
-            'ToUserName'=>$myinfo['FromUserName'],
-            'ClientMsgId'=>Helper::getMillisecond()
-            ];
-        $data=json_encode(array_merge($data,$cookie));
-        $params=[
-            ];
-        $response=Helper::post($data,$this->notify_url.http_build_query($params));
-        $obj=json_decode($response,true);
+        $params=$data;
+        $cookies['SyncKey']=Array('Count'=>count($keys),"List"=>$keys);
+        $cookies['rr']=~~time();
+
+        $response=Helper::post(json_encode($data),$this->msg_sync_url.http_build_query($params));
+        $obj=json_decode($response);
+        $result=[];
+        if($obj['BaseResponse']['Ret']==0 ){
+            if($obj['AddMsgCount']>0){
+                $result['msg']=Array();
+                foreach($obj['AddMsgList'] as $row){
+                    array_push($result['msg'],$row);
+                } 
+            }
+            $result['keys']=$obj['SyncCheckKey'];
+            $result['ContinueFlag']=$obj['ContinueFlag'];
+        }
+        return $result;
     }
 
-    public function msgSync($cookie,$myinfo)
-    {
-        $data=[
-            'Code'=>3,
-            'FromUserName'=>$myinfo['FromUserName'],
-            'ToUserName'=>$myinfo['FromUserName'],
-            'ClientMsgId'=>Helper::getMillisecond()
-            ];
-        $data=json_encode(array_merge($data,$cookie));
-        $params=[
-            ];
-        $response=Helper::post($data,$this->notify_url.http_build_query($params));
-        $obj=json_decode($response,true);
-    }
 }

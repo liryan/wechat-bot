@@ -21,6 +21,7 @@ class StateLogin extends State{
     const   STEP_INIT           =1;
     const   STEP_COOKIE         =2;
     const   STEP_NOTIFY         =3;
+    const   STEP_OVER           =4;
 
     private $deltatime          =0;
     private $failed_counter     =0;
@@ -71,6 +72,12 @@ class StateLogin extends State{
             $this->getContractList();
             break;
         case self::STEP_NOTIFY:
+            if($this->openNotify()){
+                $this->cur_step=self::STEP_OVER;
+                $this->bus->fire(State::signal_running);
+            }
+            break;
+        case self::STEP_OVER:
             break;
         }
     }
@@ -105,9 +112,24 @@ class StateLogin extends State{
     public function getContractList()
     {
         $bot_data=&$this->bus->getBotData();
-        print_r($bot_data);
         $data=$this->protocol->init($bot_data['cookie'],$bot_data['pass_ticket']);
-        print_r($data);
-        exit();
+        $bot_data['User']=$data['User'];
+        $bot_data['SyncKey']=$data['SyncKey'];
+        $contacts=$this->protocol->getContacts(Array('skey'=>$data['skey']));
+        if($contacts){
+            $bot_data['contacts']=$contacts;
+        }
+        $this->cur_step=self::STEP_NOTIFY;
     }
+
+    public function openNotify()
+    {
+        $bot_data=&$this->bus->getBotData();
+        $data=Array(
+            'ticket'=>$bot_data['pass_ticket'],
+            'FromUserName'=>$bot_data['User']['FromUserName']
+        );
+        return $this->protocol->msgNotify($bot_data['cookie'],$data);
+    }
+
 }

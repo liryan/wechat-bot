@@ -13,6 +13,7 @@ use WechatBot\Helper\Helper;
 class Bus{
     const UUID_Q="wechatbot_uuid_queue";
     const SIGNAL_Q="wechatbot_signal_queue";
+    const SIGNAL_NONE="exit";
 
     private $sigtable=[];
     private $current_signal=null;
@@ -58,6 +59,9 @@ class Bus{
      */
     public function fire($signal,$remote_uuid=0)
     {
+        if($this->current_signal==self::SIGNAL_NONE){
+            return;
+        }
         Helper::msg("Fire signal:$signal");
         if(!$remote_uuid){
             $this->current_signal=$signal;
@@ -144,6 +148,8 @@ class Bus{
      */
     public function removeMe()
     {
+        $this->current_signal=self::SIGNAL_NONE;
+        $this->sigtable=[];
         Bot::remove($this->bot_slot,0);
     }
 
@@ -157,5 +163,10 @@ class Bus{
     public function identifyOne($uin)
     {
         Bot::remove($this->bot_slot,$uin);
+    }
+
+    public function push($queuename,$data)
+    {
+        $this->queue->send($queuename,$data);
     }
 }
