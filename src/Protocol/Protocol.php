@@ -74,21 +74,22 @@ class Protocol
         $xml=Helper::get($url."&fun=new&version=v2&lang=zh_CN");
         $obj=simplexml_load_string($xml);
         $deviceid="e".mt_rand(10000000,99999999).mt_rand(1000000,9999999);
-        return [
+        $obj=[
             'cookie'=>[
                 'BaseRequest'=>[
-                    'Uin'=>$obj->wxuin,
-                    'Sid'=>$obj->wxsid,
-                    'Skey'=>$obj->skey,
+                    'Uin'=>(string)$obj->wxuin,
+                    'Sid'=>(string)$obj->wxsid,
+                    'Skey'=>(string)$obj->skey,
                     'DeviceID'=>$deviceid,
                 ]
             ],
-            'pass_ticket'=>$obj->pass_ticket,
-            'uin'=>$obj->wxuin,
-            'sid'=>$obj->wxsid,
-            'skey'=>$obj->skey,
+            'pass_ticket'=>(string)$obj->pass_ticket,
+            'uin'=>(string)$obj->wxuin,
+            'sid'=>(string)$obj->wxsid,
+            'skey'=>(string)$obj->skey,
             'deviceid'=>$deviceid,
         ];
+        return $obj;
     }
 
     public function init($cookie,$ticket)
@@ -101,7 +102,14 @@ class Protocol
         ];
         $data=json_encode($cookie);
         $data=Helper::post($data,$this->init_url.http_build_query($params));
-        return json_decode($data,true);
+        $obj=json_decode($data,true);
+        if($obj['BaseResponse']['Ret']==0){
+            return $obj;
+        }
+        else{
+            Helper::msg("init code:".$obj['BaseResponse']['Ret']);
+            return [];
+        }
     }
     
 
@@ -120,7 +128,7 @@ class Protocol
             ];
         $response=Helper::post($data,$this->notify_url.http_build_query($params));
         $obj=json_decode($response,true);
-        if($obj['Ret']==0){
+        if($obj['BaseResponse']['Ret']==0){
             return true;
         }
         return false;
@@ -144,8 +152,8 @@ class Protocol
     public function syncCheck($keys,$sign)
     {
         $synckey='';
-        foreach($keys as $row){
-            $synckey.=$row['key']."_".$row['val']."|";
+        foreach($keys['List'] as $row){
+            $synckey.=$row['Key']."_".$row['Val']."|";
         }
         $data=[
             'r'=>abs(~time()),

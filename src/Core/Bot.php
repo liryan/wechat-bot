@@ -98,19 +98,20 @@ class Bot
     public static function remove($target_bot,$with_uin)
     {
         foreach(static::$factory as $uuid=>$bot){
-            if($target_bot==$bot){
-                if($with_uin){
-                    continue;
-                }
-                else{
+            if($target_bot===$bot){
+                if(!$with_uin){
+                    Helper::msg("remove bot it");
                     unset(static::$factory[$uuid]);
                     break;
                 }
             }
-            $bot_data=$bot->bot_data;
-            if(isset($bot_data['uin']) && $bot_data['uin']==$with_uin){
-                unset(static::$factory[$uuid]);
-                break;
+            else{
+                $bot_data=$bot->bot_data;
+                if(isset($bot_data['uin']) && $bot_data['uin']==$with_uin){
+                    Helper::msg("remove bot $uuid");
+                    unset(static::$factory[$uuid]);
+                    break;
+                }
             }
         }
     }

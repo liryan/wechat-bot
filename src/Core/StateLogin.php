@@ -14,7 +14,7 @@ namespace WechatBot\Core;
 use WechatBot\Helper\Helper;
 use WechatBot\Protocol\Protocol;
 class StateLogin extends State{
-    const   CHECK_LOGINED       =5000;
+    const   CHECK_LOGINED       =10000;
     const   FAILD_COUNT_LIMIT   =100;
 
     const   STEP_START          =0;
@@ -76,6 +76,10 @@ class StateLogin extends State{
                 $this->cur_step=self::STEP_OVER;
                 $this->bus->fire(State::signal_running);
             }
+            else{
+                Helper::msg("open notify failed");
+                exit;
+            }
             break;
         case self::STEP_OVER:
             break;
@@ -97,6 +101,7 @@ class StateLogin extends State{
             $data=$this->protocol->getCookie($logininfo['url']);
             $bot_data=&$this->bus->getBotData();
             $bot_data = $data;
+            Helper::msg($bot_data['uin']." has logined");
             $this->bus->identifyOne($bot_data['uin']);
             $this->cur_step=self::STEP_INIT;
             return true;
@@ -113,13 +118,19 @@ class StateLogin extends State{
     {
         $bot_data=&$this->bus->getBotData();
         $data=$this->protocol->init($bot_data['cookie'],$bot_data['pass_ticket']);
-        $bot_data['User']=$data['User'];
-        $bot_data['SyncKey']=$data['SyncKey'];
-        $contacts=$this->protocol->getContacts(Array('skey'=>$data['skey']));
-        if($contacts){
-            $bot_data['contacts']=$contacts;
+        if($data){
+            $bot_data['User']=$data['User'];
+            $bot_data['SyncKey']=$data['SyncKey'];
+            $contacts=$this->protocol->getContacts(Array('skey'=>$bot_data['skey']));
+            if($contacts){
+                $bot_data['contacts']=$contacts;
+            }
+            $this->cur_step=self::STEP_NOTIFY;
         }
-        $this->cur_step=self::STEP_NOTIFY;
+        else{
+            Helper::msg("init weixin client failed");
+            exit;
+        }
     }
 
     public function openNotify()
@@ -127,9 +138,9 @@ class StateLogin extends State{
         $bot_data=&$this->bus->getBotData();
         $data=Array(
             'ticket'=>$bot_data['pass_ticket'],
-            'FromUserName'=>$bot_data['User']['FromUserName']
+            'FromUserName'=>$bot_data['User']['UserName']
         );
-        return $this->protocol->msgNotify($bot_data['cookie'],$data);
+        return $this->protocol->openNotify($bot_data['cookie'],$data);
     }
 
 }

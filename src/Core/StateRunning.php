@@ -1,11 +1,13 @@
 <?php
 namespace WechatBot\Core;
+use WechatBot\Helper\Helper;
+use WechatBot\Protocol\Protocol;
 class StateRunning extends State{
     const CHECK_INTVAL=35000;
     public function init($bus)
     {
         parent::init($bus);
-        $this->bus->listen(State::signal_logined,$this);
+        $this->bus->listen(State::signal_running,$this);
     }
 
     public function doState()
@@ -55,8 +57,8 @@ class StateRunning extends State{
 
     private function pushMsg($msg)
     {
-        //TODO
         $data=[];
-        $this->bus->pushMsg($data);
+        print_r($msg);
+        //$this->bus->pushMsg($data);
     }
 }
