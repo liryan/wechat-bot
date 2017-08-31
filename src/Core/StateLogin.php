@@ -19,9 +19,8 @@ class StateLogin extends State{
 
     const   STEP_START          =0;
     const   STEP_INIT           =1;
-    const   STEP_COOKIE         =2;
-    const   STEP_NOTIFY         =3;
-    const   STEP_OVER           =4;
+    const   STEP_CONTACT        =2;
+    const   STEP_OVER           =3;
 
     private $deltatime          =0;
     private $failed_counter     =0;
@@ -69,17 +68,10 @@ class StateLogin extends State{
             }
             break;
         case self::STEP_INIT:
-            $this->getContractList();
+            $this->wxInit();
             break;
-        case self::STEP_NOTIFY:
-            if($this->openNotify()){
-                $this->cur_step=self::STEP_OVER;
-                $this->bus->fire(State::signal_running);
-            }
-            else{
-                Helper::msg("open notify failed");
-                exit;
-            }
+        case self::STEP_CONTACT;
+            $this->getContacts();
             break;
         case self::STEP_OVER:
             break;
@@ -114,22 +106,35 @@ class StateLogin extends State{
         }
     }
 
-    public function getContractList()
+    public function getContacts()
+    {
+        $bot_data=&$this->bus->getBotData();
+        $contacts=$this->protocol->getContacts(Array('pass_ticket'=>$bot_data['pass_ticket'],'skey'=>$bot_data['skey']));
+        if($contacts){
+             $bot_data['contacts']=$contacts;
+             $this->cur_step=self::STEP_OVER;
+             $this->bus->fire(State::signal_running);
+             return true;
+        }
+        $this->cur_step=self::STEP_OVER;
+        return false;
+    }
+
+    public function wxInit()
     {
         $bot_data=&$this->bus->getBotData();
         $data=$this->protocol->init($bot_data['cookie'],$bot_data['pass_ticket']);
         if($data){
             $bot_data['User']=$data['User'];
             $bot_data['SyncKey']=$data['SyncKey'];
-            $contacts=$this->protocol->getContacts(Array('skey'=>$bot_data['skey']));
-            if($contacts){
-                $bot_data['contacts']=$contacts;
+            if($this->openNotify()){
+                Helper::msg("notify successfully");
+                $this->cur_step=self::STEP_CONTACT;
             }
-            $this->cur_step=self::STEP_NOTIFY;
         }
         else{
             Helper::msg("init weixin client failed");
-            exit;
+            $this->cur_step=self::STEP_OVER;
         }
     }
 

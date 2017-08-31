@@ -22,12 +22,21 @@ class Helper
      * @access public
      * @return void
      */
+    public static function getCookiePath($url)
+    {
+        $root="/tmp/";
+        $info=parse_url($url);
+        $host=$info['host'];
+        return $root.sha1($host).".cookie";
+    }
+
     public static function  post($data,$url,$cert='',$proxy='')
     {
         $ch = curl_init();
         static::msg("Post:$url"." data:".$data);
         curl_setopt($ch, CURLOPT_TIMEOUT,5);
-
+        curl_setopt($ch, CURLOPT_COOKIEFILE,static::getCookiePath($url));
+        curl_setopt($ch, CURLOPT_COOKIEJAR,static::getCookiePath($url));
         if($proxy){ 
             curl_setopt($ch,CURLOPT_PROXY, $proxy['proxy_ip']);
             curl_setopt($ch,CURLOPT_PROXYPORT, $proxy['proxy_port']);
@@ -66,6 +75,8 @@ class Helper
         static::msg("get:$url");
         curl_setopt($ch,CURLOPT_URL,$url);
         $urlinfo=parse_url($url);
+        curl_setopt($ch, CURLOPT_COOKIEFILE,static::getCookiePath($url));
+        curl_setopt($ch, CURLOPT_COOKIEJAR,static::getCookiePath($url));
         if(strcasecmp($urlinfo['scheme'],"https")==0){
             curl_setopt($ch, CURLOPT_PORT, 443);  
             //curl_setopt($ch, CURLOPT_SSLVERSION, 3);  
@@ -97,6 +108,11 @@ class Helper
     {
         $tm=gettimeofday();
         return $tm['sec']*1000+round($tm['usec']/1000);
+    }
+
+    public function getDeviceId()
+    {
+        return "e".mt_rand(10000000,99999999).mt_rand(1000000,9999999);
     }
 
     public static function msg($msg)

@@ -33,4 +33,12 @@ abstract class State implements  IStateLogic
         $this->ticktime=$now;
         return $count;
     }
+
+    public function tick()
+    {
+        $bot_data=$this->bus->getBotData();
+        if($bot_data && isset($bot_data['deviceid'])){
+            $bot_data['deviceid']="e".mt_rand(10000000,99999999).mt_rand(1000000,9999999);
+        }
+    }
 }

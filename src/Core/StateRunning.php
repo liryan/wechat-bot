@@ -3,7 +3,7 @@ namespace WechatBot\Core;
 use WechatBot\Helper\Helper;
 use WechatBot\Protocol\Protocol;
 class StateRunning extends State{
-    const CHECK_INTVAL=35000;
+    const CHECK_INTVAL=5000;
     public function init($bus)
     {
         parent::init($bus);
@@ -24,7 +24,7 @@ class StateRunning extends State{
             $bot_data=$this->bus->getBotData();
             $data['uin']=$bot_data['uin'];
             $data['sid']=$bot_data['sid'];
-            $data['deviceid']=$bot_data['deviceid'];
+            $data['deviceid']=Helper::getDeviceId();
             $data['skey']=$bot_data['skey'];
             $result=$this->protocol->syncCheck($bot_data['SyncKey'],$data);
             if($result['code']==0){

@@ -73,7 +73,7 @@ class Protocol
     {
         $xml=Helper::get($url."&fun=new&version=v2&lang=zh_CN");
         $obj=simplexml_load_string($xml);
-        $deviceid="e".mt_rand(10000000,99999999).mt_rand(1000000,9999999);
+        $deviceid=Helper::getDeviceId();
         $obj=[
             'cookie'=>[
                 'BaseRequest'=>[
@@ -104,6 +104,7 @@ class Protocol
         $data=Helper::post($data,$this->init_url.http_build_query($params));
         $obj=json_decode($data,true);
         if($obj['BaseResponse']['Ret']==0){
+            print_r($obj);
             return $obj;
         }
         else{
@@ -137,6 +138,8 @@ class Protocol
     public function getContacts($data)
     {
         $params=[
+            'lang'=>'zh_CN',
+            'pass_ticket'=>$data['pass_ticket'],
             'r'=>Helper::getMillisecond(),
             'seq'=>0,
             'skey'=>$data['skey'],
@@ -160,7 +163,7 @@ class Protocol
             'skey'=>$sign['skey'],
             'sid'=>$sign['sid'],
             'uin'=>$sign['uin'],
-            'deviceid'=>$sign['deviceid'],
+            'deviceid'=>Helper::getDeviceId(),
             'synckey'=>trim($synckey,"|"),
             '_'=>Helper::getMillisecond()
         ];
